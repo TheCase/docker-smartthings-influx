@@ -1,0 +1,203 @@
+---
+meta:
+  name:     (( param "Please name your pipeline" ))
+  release:  (( grab meta.name ))
+  target:   (( param "Please identify the name of the target Concourse CI" ))
+  url:      (( param "Please identify the full url of Concourse CI" ))
+  pipeline: (( grab meta.name ))
+  github:
+    uri:          (( concat "git@github.com:" meta.github.owner "/" meta.github.repo ))
+    owner:        (( param "Please specify the name of the user / organization that owns the Github repository" ))
+    repo:         (( grab meta.name ))
+    branch:       master
+    private_key:  (( param "Please generate an SSH Deployment Key for this repo and specify it here" ))
+    access_token: (( param "Please generate a Personal Access Token and specify it here" ))
+  dockerhub:
+    email:      (( param "Please specify the email address for your Dockerhub account" ))
+    username:   (( param "Please specify the username for your Dockerhub account" ))
+    password:   (( param "Please specify the password for your Dockerhub account" ))
+    repository: (( param "Please specify the name of the image (repo/name) that you are building" ))
+  nomad:
+    url:        (( param "Please identify the full url your nomad cluster" ))
+  slack:
+    webhook:      (( param "Please specify your Slack Incoming Webhook Integration URL" ))
+
+groups:
+  - name: (( grab meta.name ))
+    jobs:
+      - build
+      - minor
+      - major
+      - push
+      - deploy
+
+jobs:
+  - name: build
+    serial: true
+    plan:
+      - { get: git,     trigger: true }
+      - task: tests
+        file: git/ci/test.yml
+      - put: edge
+        params: {build: git}
+        on_failure:
+          put: notify
+          params:
+            text: "build failed *$BUILD_PIPELINE_NAME* \
+                  $ATC_EXTERNAL_URL/builds/$BUILD_ID"
+      - put: notify
+        params:
+          text: "built *$BUILD_PIPELINE_NAME* \
+                $ATC_EXTERNAL_URL/builds/$BUILD_ID"
+
+  - name: minor
+    plan:
+      - { get: version, trigger: false, params: {bump: minor} }
+      - { put: version,                 params: {file: version/number} }
+
+  - name: major
+    plan:
+      - { get: version, trigger: false, params: {bump: major} }
+      - { put: version,                 params: {file: version/number} }
+
+  - name: push
+    serial: true
+    plan:
+      - aggregate:
+        - { get: version }
+        - { get: edge, passed: [build], params: { save: true }, trigger: true }
+        - { get: git,  passed: [build] }
+
+      - put: version
+        params:
+          bump: patch
+
+      - task: release
+        config:
+          platform: linux
+          image_resource: 
+            type: docker-image
+            source: 
+              repository: alpine
+              tag: latest
+          inputs:
+            - name: git
+            - name: version
+          outputs:
+            - name: gh
+            - name: pushme
+          run:
+            path: ./git/ci/scripts/prepare
+            args: []
+          params:
+            REPO_ROOT:    git
+            RELEASE_ROOT: gh
+            RELEASE_NAME: (( grab meta.release ))
+            REPO_OUT:     pushme/git
+            VERSION_FROM: version/number
+        on_failure:
+          put: notify
+          params:
+            text: "release failed *$BUILD_PIPELINE_NAME* \
+                  $ATC_EXTERNAL_URL/builds/$BUILD_ID"
+
+      - put: git
+        params:
+          rebase: true
+          repository: pushme/git
+      - put: github
+        params:
+          name: gh/name
+          tag: gh/tag
+          body: gh/notes.md
+
+
+      - put: latest # as 'latest'
+        params:
+          load: edge
+
+      - put: latest # as 'vX.Y.Z'
+        params:
+          tag: version/number
+          load: edge
+
+      - put: notify
+        params:
+          text: "pushed *$BUILD_PIPELINE_NAME* \
+                $ATC_EXTERNAL_URL/builds/$BUILD_ID"
+
+  - name: deploy
+    serial: true
+    plan:
+      - aggregate:
+        - { get: latest, passed: [push], trigger: true, params: { save: true } }
+        - { get: version, trigger: false  }
+        - { get: git,  passed: [push] }
+      - put: nomad
+        params:
+          job_path: git/nomad.hcl
+      - put: notify
+        params:
+          text: "deployed *$BUILD_PIPELINE_NAME* \
+                $ATC_EXTERNAL_URL/builds/$BUILD_ID"
+
+resource_types:
+  - name: nomad
+    type: docker-image
+    source:
+      repository: aretelabs/nomad-resource
+      tag: latest
+
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+
+resources:
+  - name: git
+    type: git
+    source:
+      uri: (( grab meta.github.uri ))
+      private_key: (( grab meta.github.private_key ))
+      branch: (( grab meta.github.branch ))
+
+  - name: edge
+    type: docker-image
+    source:
+      .: (( inject meta.dockerhub ))
+      tag: edge
+
+  - name: latest
+    type: docker-image
+    source:
+      .: (( inject meta.dockerhub ))
+      tag: latest
+
+  - name: version
+    type: semver
+    source:
+      driver: git
+      uri: (( grab meta.github.uri ))
+      private_key: (( grab meta.github.private_key ))
+      branch: version
+      file: version
+      initial_version: (( grab meta.initial_version || "0.0.1" ))
+
+  - name: nomad
+    type: nomad
+    source:
+      url: (( grab meta.nomad.url ))
+      name: (( grab meta.name ))
+
+  - name: notify
+    type: slack-notification
+    source:
+      url: (( grab meta.slack.webhook ))
+
+  - name: github
+    type: github-release
+    source:
+     user:         (( grab meta.github.owner ))
+     repository:   (( grab meta.github.repo ))
+     access_token: (( grab meta.github.access_token ))

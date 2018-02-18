@@ -1,0 +1,15 @@
+# concourse build file
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: 
+    repository: alpine
+    tag: latest
+
+inputs:
+  - name: git
+
+run:
+  path: uptime 
