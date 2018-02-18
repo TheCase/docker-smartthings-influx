@@ -52,9 +52,9 @@ while True:
            else:
                name = maps[device['label']]
            val = device['value']
-           ts = datetime.datetime.now().isoformat()
-           print("{0} - {1} {2}: {3}").format(ts,name,meas,val)
            if val == None:
               val = -1
+           ts = datetime.datetime.now().isoformat()
+           print("{0} - {1} {2}: {3}").format(ts,name,meas,val)
            influx(meas, name, int(val))
     time.sleep(int(os.environ['POLL_INTERVAL'])) 
