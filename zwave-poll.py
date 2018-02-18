@@ -54,5 +54,5 @@ while True:
            print("{0} {1}: {2}").format(name,meas,val)
            if val == None:
               val = -1
-         #  influx(meas, name, int(val))
+           influx(meas, name, int(val))
     time.sleep(int(os.environ['POLL_INTERVAL'])) 
