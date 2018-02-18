@@ -4,6 +4,7 @@ import sys, os
 import smartthings
 import time
 from influxdb import InfluxDBClient
+import datetime
 
 def fixName(name):
     name = name.replace(" ","_")
@@ -50,8 +51,9 @@ while True:
                name = fixName(device['label'])
            else:
                name = maps[device['label']]
-           val  = device['value']
-           print("{0} {1}: {2}").format(name,meas,val)
+           val = device['value']
+           ts = datetime.datetime.now().isoformat()
+           print("{0} - {1} {2}: {3}").format(ts,name,meas,val)
            if val == None:
               val = -1
            influx(meas, name, int(val))
