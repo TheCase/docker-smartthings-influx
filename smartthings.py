@@ -7,15 +7,6 @@ import datetime
 
 from pprint import pprint
 
-maps = { "Root Cellar": "cellar",
-         "Root Cellar old": "deadcellar",
-         "Porch": "porch",
-         "Mailbox": "mailbox",
-         "Greenhouse": "greenhouse",
-         "Ejector Pump": "ejector",
-         "Leaf Charger": "leaf"
-}
-
 # define the capabilities we want to capture
 capabilites = { "temperatureMeasurement":       "temperature",
                 "relativeHumidityMeasurement":  "humidity",
