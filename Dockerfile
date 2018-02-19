@@ -17,6 +17,5 @@ ENV INFLUXDB   zwave
 ENV POLL_INTERVAL 300  
 
 ENV ST_TOKEN XXXXXXXXXXXX
-ENV ST_CLIENT 000000000000
 
-CMD [ "python", "zwave-poll.py" ]
+CMD [ "python", "smartthings.py" ]
