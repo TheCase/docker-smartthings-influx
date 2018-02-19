@@ -17,10 +17,13 @@ capabilites = { "temperatureMeasurement":       "temperature",
                 "accelerationSensor":            "acceleration"
 }
 
-def reformat(name):
+def reformat(name,item_type):
     name = name.replace(" ","_")
     name = name.replace("/","-")
     name = name.replace(":","")
+    for tag in ['Lock']:
+        if tag in item_type:
+            name = "{0}-{1}".format(name,tag)
     return name.lower()
 
 def convert(item):
@@ -28,12 +31,6 @@ def convert(item):
         item = 0
         if item == "active":
             item = 1
-    return(item)
-
-def retag(item,item_type):
-    for tag in ['Sensor','Lock']:
-        if tag in item_type:
-            item = "{0}-{1}".format(item,tag.lower())
     return(item)
 
 def influx(measurement, location, value):
@@ -79,7 +76,6 @@ def main():
     metrics = list()
     d_url = 'https://api.smartthings.com/v1/devices'
     for device in get(d_url)['items']:
-        label = retag(device['label'],device['name'])
         process = False
         for cap in device['components'][0]['capabilities']:
             if cap.values()[0] in capabilites:
@@ -88,7 +84,7 @@ def main():
             url = '{0}/{1}/status'.format(d_url,device['deviceId'])
             for cap,info in get(url)['components']['main'].iteritems():
                 if cap in capabilites:
-                    name = reformat(label)
+                    name = reformat(device['label'],device['name'])
                     meas = capabilites[cap]
                     value = convert(info[meas]['value'])
                     ts = datetime.datetime.now().isoformat()
