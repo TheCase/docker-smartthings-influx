@@ -55,7 +55,7 @@ def get(url):
     r = requests.get(url,headers=headers)
     check_error(r)
     data = r.json()
-    if ('_links' in data and data['_links']['next'] != None):
+    if ('_links' in data and 'next' in data['_links']):
         print "fix this code for paging: https://smartthings.developer.samsung.com/develop/api-ref/st-api.html#section/Paging"
         sys.exit(1)
     return(data)
