@@ -13,9 +13,6 @@ ENV INFLUXUSER root
 ENV INFLUXPASS root
 ENV INFLUXDB   zwave 
 
-# time between API hits in seconds
-ENV POLL_INTERVAL 300  
-
 ENV ST_TOKEN XXXXXXXXXXXX
 
 CMD [ "python", "smartthings.py" ]
