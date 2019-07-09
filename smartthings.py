@@ -104,9 +104,4 @@ def main():
 
 
 if __name__ == '__main__':
-  while True:
-    main()
-    ts = datetime.datetime.now().isoformat()
-    print("{0} sleeping for {1} seconds").format(
-        ts, os.environ['POLL_INTERVAL'])
-    time.sleep(int(os.environ['POLL_INTERVAL']))
+  main()
