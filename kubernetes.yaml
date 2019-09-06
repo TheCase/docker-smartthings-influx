@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: stats-smartthings
+  labels:
+    component: stats-smartthings
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: stats-smartthings
+    spec:
+      containers:
+      - name: stats-smartthings
+        image: thecase/smartthings-influx:1.0.0
+        env:
+        - name: ST_TOKEN
+          valueFrom: 
+            secretKeyRef: 
+              name: "smartthings"
+              key: "token"
+        - name: POLL_INTERVAL
+          value: "60"
+        - name: INFLUXHOST
+          value: "influxdb.default.svc.cluster.local"
+        - name: INFLUXPORT
+          value: "8086"
+        - name: INFLUXUSER
+          valueFrom: 
+            secretKeyRef: 
+              name: "influxdb"
+              key: "admin_user"
+        - name: INFLUXPASS
+          valueFrom: 
+            secretKeyRef: 
+              name: "influxdb"
+              key: "admin_pass"
+        resources:
+           requests:
+             cpu: 0.25
+           limits:
+             cpu: 1
