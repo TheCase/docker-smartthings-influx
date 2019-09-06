@@ -35,12 +35,18 @@ def convert(item):
     item = 0
     if item == "active":
       item = 1
+  if item == None:
+    item = 0
   return(item)
 
 
 def influx(measurement, location, value):
-  client = InfluxDBClient(os.environ['INFLUXHOST'], os.environ['INFLUXPORT'],
-                          os.environ['INFLUXUSER'], os.environ['INFLUXPASS'], os.environ['INFLUXDB'])
+  client = InfluxDBClient(os.getenv('INFLUXHOST', 'localhost'),
+                          os.getenv('INFLUXPORT', '8086' ),
+                          os.getenv('INFLUXUSER', 'root'),
+                          os.getenv('INFLUXPASS', 'root'),
+                          os.getenv('INFLUXDB',   'smartthings')
+                          )
   json_body = [
       {
           "measurement": str(measurement),
