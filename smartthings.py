@@ -94,7 +94,7 @@ def push(metrics):
 
 
 def main():
-  sleep_interval = os.getenv('POLL_INTERVAL', 60)
+  sleep_interval = int(os.getenv('POLL_INTERVAL', 60))
   while True:
     metrics = list()
     d_url = 'https://api.smartthings.com/v1/devices'
