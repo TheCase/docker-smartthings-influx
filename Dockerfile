@@ -1,6 +1,5 @@
-FROM alpine:latest
+FROM python:3
 
-RUN apk add --update python py-pip
 RUN pip install --upgrade pip
 
 RUN pip install requests influxdb 
