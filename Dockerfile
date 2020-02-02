@@ -15,4 +15,4 @@ ENV INFLUXDB   zwave
 
 ENV ST_TOKEN XXXXXXXXXXXX
 
-CMD [ "python", "smartthings.py" ]
+CMD [ "python3", "smartthings.py" ]
