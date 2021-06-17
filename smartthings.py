@@ -21,7 +21,7 @@ capabilites = {"temperatureMeasurement":       "temperature",
                "acceleration":                 "active",
                "powerMeter":                   "power",  # watts
                "energyMeter":                  "energy",  # kWh
-               "accelerationSensor":            "acceleration"
+               "accelerationSensor":           "acceleration"
                }
 
 
